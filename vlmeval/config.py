@@ -152,7 +152,7 @@ llava_series = {
     'Aquila-VL-2B': partial(LLaVA_OneVision, model_path='BAAI/Aquila-VL-2B-llava-qwen'),
     'llava_video_qwen2_7b':partial(LLaVA_OneVision, model_path='lmms-lab/LLaVA-Video-7B-Qwen2'),
     'llava_video_qwen2_72b':partial(LLaVA_OneVision, model_path='lmms-lab/LLaVA-Video-72B-Qwen2'),
-    'llava_qwen2_0.5b_midtune_ve-lr_2e-5':partial(LLaVA_OneVision, model_path='/remote-home1/cktan/reps/LLaVA-NeXT/checkpoints/finetune/llavanext-qwen-midtune_ve-lr_2e-5-finetune-tune_mlp_lm'),
+    'llava_qwen2_0.5b_baseline':partial(LLaVA_OneVision, model_path='/home/image_data/cktan/reps/LLaVA-NeXT/checkpoints/finetune/llavanext-qwen2-0.5B-pretrain_mlp-llava665k-tune_mlp_lm'),
 }
 
 internvl_series = {

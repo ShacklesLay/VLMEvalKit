@@ -23,9 +23,10 @@ sty
 tabulate
 tiktoken
 timeout-decorator
-torch>=2.0.1
+torch==2.2.0
+torch-npu==2.2.0.post2
 tqdm
-transformers
-typing_extensions==4.7.1
+transformers==4.39.3
+typing_extensions
 validators
 xlsxwriter

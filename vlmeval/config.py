@@ -153,6 +153,10 @@ llava_series = {
     'llava_video_qwen2_7b':partial(LLaVA_OneVision, model_path='lmms-lab/LLaVA-Video-7B-Qwen2'),
     'llava_video_qwen2_72b':partial(LLaVA_OneVision, model_path='lmms-lab/LLaVA-Video-72B-Qwen2'),
     'llava_qwen2_0.5b_baseline':partial(LLaVA_OneVision, model_path='/home/image_data/cktan/reps/LLaVA-NeXT/checkpoints/finetune/llavanext-qwen2-0.5B-pretrain_mlp-llava665k-tune_mlp_lm'),
+    'llava_qwen2_0.5b_baseline_last_layer':partial(LLaVA_OneVision, model_path='/home/image_data/cktan/reps/LLaVA-NeXT/checkpoints/finetune/llavanext-clip-vit-large-patch14-336-openai-Qwen2-0.5B-tune_mlp-select_last_layer-tune_mlp_lm'),
+    'llava_qwen2_0.5b_midtune_baseline':partial(LLaVA_OneVision, model_path='/home/image_data/cktan/reps/LLaVA-NeXT/checkpoints/finetune/llavanext-qwen2-0.5B-pretrain_mlp-blip558k-midtune_vt-blip558k-finetune-tune_mlp_lm'),
+    'llava_qwen2_0.5b_baseline_42':partial(LLaVA_OneVision, model_path='/home/image_data/cktan/reps/LLaVA-NeXT/checkpoints/finetune/llavanext-qwen2-0.5B-pretrain_mlp-llava665k-tune_mlp_lm-seed_42'),
+    'llava_qwen2_0.5b_baseline_reshape8x':partial(LLaVA_OneVision, model_path='/home/image_data/cktan/reps/LLaVA-NeXT/checkpoints/finetune/llavanext-qwen2-0.5B-pretrain_mlp-blip665k-reshape8x_mlp2x_gelu-tune_mlp_lm'),
 }
 
 internvl_series = {

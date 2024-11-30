@@ -38,16 +38,17 @@ def main(args):
     average = (blink_score + MME_per/2000 + MME_re/800 + MMMU_val + MMStar_score + OCRBench_score/1000 + POPE_score/100 + RealWorldQA_score) / 8
     # 创建一个字典，将所有的分数存储在一起
     scores = {
+        "MMStar": round(MMStar_score,3),
         "BLINK": round(blink_score,3),
+        "RealWorldQA": round(RealWorldQA_score,3),
+        "OCRBench": round(OCRBench_score,3),
         "MME perception": round(MME_per,3),
         "MME reasoning": round(MME_re,3),
         "MMMU validation": round(MMMU_val,3),
-        "MMStar": round(MMStar_score,3),
-        "OCRBench": round(OCRBench_score,3),
         "POPE": round(POPE_score,3),
-        "RealWorldQA": round(RealWorldQA_score,3),
         "Average": round(average,3)
     }
+
 
     # 将字典转换为 DataFrame
     df_scores = pd.DataFrame([scores])

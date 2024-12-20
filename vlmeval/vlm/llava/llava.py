@@ -640,7 +640,7 @@ class LLaVA_OneVision(BaseModel):
             images, self.image_processor, self.model.config
         )
         image_tensor = [
-            _image.to(dtype=torch.float16, device="cuda") for _image in image_tensor
+            _image.to(dtype=self.model.dtype, device="cuda") for _image in image_tensor
         ]
 
         conv = copy.deepcopy(self.conv_templates[self.conv_template])

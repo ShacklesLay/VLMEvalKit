@@ -24,6 +24,11 @@ from huggingface_hub import scan_cache_dir
 from huggingface_hub.utils._cache_manager import _scan_cached_repo
 from sty import fg, bg, ef, rs
 
+
+def modelscope_flag_set():
+    return os.environ.get('VLMEVALKIT_USE_MODELSCOPE', None) in ['1', 'True']
+
+
 def process_punctuation(inText):
     import re
     outText = inText
@@ -73,16 +78,29 @@ def bincount(lst):
     return bins
 
 def get_cache_path(repo_id, branch='main', repo_type='datasets'):
-    from .file import HFCacheRoot
-    cache_path = HFCacheRoot()
-    org, repo_name = repo_id.split('/')
-    repo_path = Path(osp.join(cache_path, f'{repo_type}--{org}--{repo_name}/'))
-    hf_cache_info = _scan_cached_repo(repo_path=repo_path)
-    revs = {r.refs: r for r in hf_cache_info.revisions}
-    if branch is not None:
-        revs = {refs: r for refs, r in revs.items() if branch in refs}
-    rev2keep = max(revs.values(), key=lambda r: r.last_modified)
-    return str(rev2keep.snapshot_path)
+    try:
+        if modelscope_flag_set():
+            from modelscope.hub.file_download import create_temporary_directory_and_cache
+            if repo_type == 'datasets':
+                repo_type = 'dataset'
+            _, cache = create_temporary_directory_and_cache(model_id=repo_id, repo_type=repo_type)
+            cache_path = cache.get_root_location()
+            return cache_path
+        else:
+            from .file import HFCacheRoot
+            cache_path = HFCacheRoot()
+            org, repo_name = repo_id.split('/')
+            repo_path = Path(osp.join(cache_path, f'{repo_type}--{org}--{repo_name}/'))
+            hf_cache_info = _scan_cached_repo(repo_path=repo_path)
+            revs = {r.refs: r for r in hf_cache_info.revisions}
+            if branch is not None:
+                revs = {refs: r for refs, r in revs.items() if branch in refs}
+            rev2keep = max(revs.values(), key=lambda r: r.last_modified)
+            return str(rev2keep.snapshot_path)
+    except Exception as e:
+        import logging
+        logging.warning(f'{type(e)}: {e}')
+        return None
 
 def proxy_set(s):
     import os
@@ -118,14 +136,47 @@ try:
 except ImportError:
     pass
 
-def timestr(second=True, minute=False):
-    s = datetime.datetime.now().strftime('%Y%m%d%H%M%S')[2:]
-    if second:
+def timestr(granularity='second'):
+    s = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+    assert granularity in ['second', 'minute', 'hour', 'day']
+    if granularity == 'second':
         return s
-    elif minute:
+    elif granularity == 'minute':
         return s[:-2]
-    else:
+    elif granularity == 'hour':
         return s[:-4]
+    elif granularity == 'day':
+        return s[:-6]
+
+def _minimal_ext_cmd(cmd, cwd=None):
+    env = {}
+    for k in ['SYSTEMROOT', 'PATH', 'HOME']:
+        v = os.environ.get(k)
+        if v is not None:
+            env[k] = v
+    env['LANGUAGE'] = 'C'
+    env['LANG'] = 'C'
+    env['LC_ALL'] = 'C'
+    out = subprocess.Popen(cmd, stdout=subprocess.PIPE, env=env, cwd=cwd).communicate()[0]
+    return out
+
+def githash(fallback='unknown', digits=8):
+    if digits is not None and not isinstance(digits, int):
+        raise TypeError('digits must be None or an integer')
+    try:
+        import vlmeval
+    except ImportError as e:
+        import logging
+        logging.error(f'ImportError: {str(e)}')
+        return fallback
+    try:
+        out = _minimal_ext_cmd(['git', 'rev-parse', 'HEAD'], cwd=vlmeval.__path__[0])
+        sha = out.strip().decode('ascii')
+        if digits is not None:
+            sha = sha[:digits]
+    except OSError:
+        sha = fallback
+    return sha
 
 def dict_merge(dct, merge_dct):
     for k, _ in merge_dct.items():

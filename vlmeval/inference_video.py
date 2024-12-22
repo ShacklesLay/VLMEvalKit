@@ -18,11 +18,11 @@ def parse_args():
 
 
 # Only API model is accepted
-def infer_data_api(work_dir, model_name, dataset, nframe=8, pack=False, samples_dict={}, api_nproc=4, fps=-1):
+def infer_data_api(model, work_dir, model_name, dataset, nframe=8, pack=False, samples_dict={}, api_nproc=4, fps=-1):
     rank, world_size = get_rank_and_world_size()
     assert rank == 0 and world_size == 1
     dataset_name = dataset.dataset_name
-    model = supported_VLM[model_name]() if isinstance(model_name, str) else model_name
+    model = supported_VLM[model_name]() if isinstance(model, str) else model
     assert getattr(model, 'is_api', False)
 
     indices = list(samples_dict.keys())
@@ -49,7 +49,8 @@ def infer_data_api(work_dir, model_name, dataset, nframe=8, pack=False, samples_
     return res
 
 
-def infer_data(model_name, work_dir, dataset, out_file, nframe=8, pack=False, verbose=False, api_nproc=4, fps=-1):
+def infer_data(model, model_name, work_dir, dataset, out_file, nframe=8,
+               pack=False, verbose=False, api_nproc=4, fps=-1):
     res = load(out_file) if osp.exists(out_file) else {}
     rank, world_size = get_rank_and_world_size()
     dataset_name = dataset.dataset_name
@@ -60,15 +61,16 @@ def infer_data(model_name, work_dir, dataset, out_file, nframe=8, pack=False, ve
 
     sample_indices_sub = sample_indices[rank::world_size]
     if np.all([idx in res for idx in sample_indices_sub]):
-        return model_name
+        return model
     sample_indices_subrem = [x for x in sample_indices_sub if x not in res]
 
-    model = supported_VLM[model_name]() if isinstance(model_name, str) else model_name
+    model = supported_VLM[model_name]() if isinstance(model, str) else model
 
     is_api = getattr(model, 'is_api', False)
     if is_api:
         assert world_size == 1
         supp = infer_data_api(
+            model=model,
             work_dir=work_dir,
             model_name=model_name,
             dataset=dataset,
@@ -81,12 +83,12 @@ def infer_data(model_name, work_dir, dataset, out_file, nframe=8, pack=False, ve
             assert k in supp
         res.update(supp)
         dump(res, out_file)
-        return model_name
+        return model
 
     for i, idx in tqdm(enumerate(sample_indices_subrem)):
         if idx in res:
             continue
-        if getattr(model, 'nframe', 0) > 0:
+        if getattr(model, 'nframe', None) is not None and getattr(model, 'nframe', 0) > 0:
             if nframe > 0:
                 if getattr(model, 'nframe', 0) != nframe:
                     print(f'{model_name} is a video-llm model, nframe is set to {nframe}, not using default')
@@ -95,7 +97,7 @@ def infer_data(model_name, work_dir, dataset, out_file, nframe=8, pack=False, ve
                 raise ValueError(f'fps is not suitable for {model_name}')
             else:
                 setattr(model, 'nframe', None)
-        if getattr(model, 'fps', 0) > 0:
+        if getattr(model, 'fps', None) is not None and getattr(model, 'fps', 0) > 0:
             if fps > 0:
                 if getattr(model, 'fps', 0) != fps:
                     print(f'{model_name} is a video-llm model, fps is set to {fps}, not using default')
@@ -153,25 +155,26 @@ def infer_data_job_video(
         result_file = osp.join(work_dir, f'{model_name}_{dataset_name}_{nframe}frame_{packstr}.xlsx')
     else:
         result_file = osp.join(work_dir, f'{model_name}_{dataset_name}_{fps}fps_{packstr}.xlsx')
-    if dataset_name == 'Video-MME':
+    if dataset_name == 'Video-MME' or dataset_name == 'LongVideoBench':
         subtitle_str = 'subs' if subtitle else 'nosubs'
         result_file = result_file.replace('.xlsx', f'_{subtitle_str}.xlsx')
     # Dump Predictions to Prev File if result file exists
     if osp.exists(result_file):
-        return model_name
+        return model
 
     if nframe > 0:
         tmpl = osp.join(work_dir, '{}' + f'{world_size}_{dataset_name}_{nframe}frame_{packstr}.pkl')
     else:
         tmpl = osp.join(work_dir, '{}' + f'{world_size}_{dataset_name}_{fps}fps_{packstr}.pkl')
-    if dataset_name == 'Video-MME':
+    if dataset_name == 'Video-MME' or dataset_name == 'LongVideoBench':
         subtitle_str = 'subs' if subtitle else 'nosubs'
         tmpl = tmpl.replace('.pkl', f'_{subtitle_str}.pkl')
 
     out_file = tmpl.format(rank)
 
     model = infer_data(
-        model,
+        model=model,
+        model_name=model_name,
         work_dir=work_dir,
         dataset=dataset,
         nframe=nframe,

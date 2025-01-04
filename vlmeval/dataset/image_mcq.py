@@ -892,8 +892,8 @@ class NaturalBenchDataset(ImageMCQDataset):
 
         scores = get_scores(results)
         print(scores)
-        score_file = 'NaturalBench_acc.csv'
         df = pd.DataFrame(list(scores.items()), columns=['Metric', 'Score'])
-        dump(df, score_file)
+        score_pth = eval_file.replace('.xlsx', '_acc.csv')
+        dump(df, score_pth)
 
         return scores

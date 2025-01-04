@@ -597,8 +597,10 @@ class LLaVA_OneVision(BaseModel):
         model.eval()
         model.tie_weights()
 
-        if "llava" in model_path.lower():
+        if "qwen" in model_path.lower():
             conv_mode = "qwen_1_5"
+        elif 'vicuna' in model_path.lower():
+            conv_mode = 'v1'
         if 'llava-video' in model_path.lower():
             self.nframe = 64
         else:
